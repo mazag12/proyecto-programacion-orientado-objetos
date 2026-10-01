@@ -29,6 +29,7 @@ import com.computototal.inventario.servicio.ResultadoAltaEquipo;
 import com.computototal.inventario.servicio.ResultadoMovimiento;
 import com.computototal.inventario.servicio.SesionUsuario;
 import com.computototal.inventario.servicio.StockServicio;
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 public final class ConsolaInventario {
     private final BufferedReader entrada;
@@ -111,13 +112,9 @@ public final class ConsolaInventario {
 
         int indice;
         try {
-            indice = Integer.parseInt(textoOpcion) - 1;
-        } catch (NumberFormatException errorNumero) {
+            indice = ValidacionesEntrada.entero(textoOpcion, "opcion", 1, opciones.size()) - 1;
+        } catch (IllegalArgumentException errorNumero) {
             System.out.println("Ingrese un numero de opcion valido.");
-            return true;
-        }
-        if (indice < 0 || indice >= opciones.size()) {
-            System.out.println("Opcion fuera de rango.");
             return true;
         }
         try {
@@ -327,29 +324,15 @@ public final class ConsolaInventario {
     }
 
     private int leerIndice(String mensaje, int total) throws IOException {
-        int indice = leerEntero(mensaje) - 1;
-        if (indice < 0 || indice >= total) {
-            throw new IllegalArgumentException("Seleccione un numero entre 1 y " + total);
-        }
-        return indice;
+        return ValidacionesEntrada.entero(leer(mensaje), "opcion", 1, total) - 1;
     }
 
     private int leerEntero(String mensaje) throws IOException {
-        String texto = leer(mensaje);
-        try {
-            return Integer.parseInt(texto);
-        } catch (NumberFormatException errorNumero) {
-            throw new IllegalArgumentException("Ingrese un numero entero valido");
-        }
+        return ValidacionesEntrada.entero(leer(mensaje), "numero", Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     private LocalDate leerFecha(String mensaje) throws IOException {
-        String texto = leer(mensaje);
-        try {
-            return LocalDate.parse(texto);
-        } catch (java.time.format.DateTimeParseException errorFecha) {
-            throw new IllegalArgumentException("Use el formato AAAA-MM-DD para la fecha");
-        }
+        return ValidacionesEntrada.fecha(leer(mensaje), "fecha");
     }
 
     private char[] leerContrasena() throws IOException {

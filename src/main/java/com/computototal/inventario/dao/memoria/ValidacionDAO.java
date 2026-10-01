@@ -1,16 +1,17 @@
 package com.computototal.inventario.dao.memoria;
 
-import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
+
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 final class ValidacionDAO {
     private ValidacionDAO() {
     }
 
     static UUID id(UUID valor) {
-        return Objects.requireNonNull(valor, "El identificador no puede ser null");
+        return ValidacionesEntrada.identificador(valor, "El identificador");
     }
 
     static <T> T entidad(T valor, String nombre) {
@@ -18,12 +19,7 @@ final class ValidacionDAO {
     }
 
     static String textoClave(String valor, String nombre) {
-        Objects.requireNonNull(valor, nombre + " no puede ser null");
-        String normalizado = valor.strip();
-        if (normalizado.isEmpty()) {
-            throw new IllegalArgumentException(nombre + " no puede estar vacio");
-        }
-        return normalizado.toLowerCase(Locale.ROOT);
+        return ValidacionesEntrada.textoClave(valor, nombre);
     }
 
     static IllegalArgumentException duplicado(String nombre, String valor) {

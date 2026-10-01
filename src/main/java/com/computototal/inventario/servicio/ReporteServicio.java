@@ -2,6 +2,7 @@ package com.computototal.inventario.servicio;
 
 import com.computototal.inventario.dao.MovimientoDAO;
 import com.computototal.inventario.modelo.Movimiento;
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -181,11 +182,7 @@ public final class ReporteServicio {
     }
 
     private void validarRango(LocalDate inicio, LocalDate fin) {
-        Objects.requireNonNull(inicio, "inicio");
-        Objects.requireNonNull(fin, "fin");
-        if (inicio.isAfter(fin)) {
-            throw new IllegalArgumentException("La fecha inicial no puede ser posterior a la fecha final");
-        }
+        ValidacionesEntrada.rangoFechas(inicio, fin);
     }
 
     private void autorizar() {

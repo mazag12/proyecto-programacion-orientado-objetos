@@ -1,26 +1,22 @@
 package com.computototal.inventario.modelo;
 
-import java.util.Objects;
 import java.util.UUID;
+
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 final class ValidacionDominio {
     private ValidacionDominio() {
     }
 
     static String textoObligatorio(String valor, String nombreCampo) {
-        Objects.requireNonNull(valor, nombreCampo + " no puede ser null");
-        String valorNormalizado = valor.strip();
-        if (valorNormalizado.isEmpty()) {
-            throw new IllegalArgumentException(nombreCampo + " no puede estar vacio");
-        }
-        return valorNormalizado;
+        return ValidacionesEntrada.textoObligatorio(valor, nombreCampo);
     }
 
     static UUID identificador(UUID valor, String nombreCampo) {
-        return Objects.requireNonNull(valor, nombreCampo + " no puede ser null");
+        return ValidacionesEntrada.identificador(valor, nombreCampo);
     }
 
     static <T> T requerido(T valor, String nombreCampo) {
-        return Objects.requireNonNull(valor, nombreCampo + " no puede ser null");
+        return ValidacionesEntrada.requerido(valor, nombreCampo);
     }
 }

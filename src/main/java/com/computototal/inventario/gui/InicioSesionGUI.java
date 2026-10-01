@@ -25,6 +25,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import com.computototal.inventario.servicio.AutenticacionServicio;
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 public final class InicioSesionGUI {
     private static final Color PRIMARIO_COLOR = new Color(24, 64, 57);
@@ -140,6 +141,8 @@ public final class InicioSesionGUI {
                 return;
             }
             try {
+                ValidacionesEntrada.textoObligatorio(nombreUsuario, "nombreUsuario");
+                ValidacionesEntrada.contrasena(clave);
                 autenticacion.iniciarSesion(nombreUsuario, clave);
                 sesionIniciada.set(true);
                 dialogo.dispose();

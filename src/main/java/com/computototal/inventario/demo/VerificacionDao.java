@@ -24,6 +24,9 @@ import com.computototal.inventario.modelo.Rol;
 import com.computototal.inventario.modelo.TipoMovimiento;
 import com.computototal.inventario.modelo.Ubicacion;
 import com.computototal.inventario.modelo.Usuario;
+import com.computototal.inventario.validacion.ValidacionesEntrada;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +44,7 @@ public final class VerificacionDao {
     public static void main(String[] args) {
         System.out.println("Verificacion local de DAOs en memoria");
         System.out.println("Usuario usa hash y sal ficticios; esta demo solo verifica almacenamiento, no autenticacion.");
+        verificarValidacionesEntrada();
         verificarEquipo();
         verificarCategoria();
         verificarProveedor();
@@ -138,6 +142,10 @@ public final class VerificacionDao {
 
     private static void verificarProveedor() {
         ProveedorDAO dao = new ProveedorDAOMemoria();
+        esperarExcepcion("Proveedor rechaza telefono corto", IllegalArgumentException.class,
+                () -> new Proveedor(id(302), "Proveedor invalido", "12345", "contacto@uno.pe"));
+        esperarExcepcion("Proveedor rechaza correo invalido", IllegalArgumentException.class,
+                () -> new Proveedor(id(303), "Proveedor invalido", "999111222", "correo-invalido"));
         Proveedor original = new Proveedor(id(301), "Proveedor Uno", "999111222", "contacto@uno.pe");
         dao.insertar(original);
         original.setTelefono("000000000");
@@ -151,6 +159,34 @@ public final class VerificacionDao {
                 dao.buscarPorId(id(301)).map(Proveedor::getCorreoElectronico).orElse(null));
         dao.eliminar(id(301));
         comparar("Eliminar proveedor", false, dao.buscarPorId(id(301)).isPresent());
+    }
+
+    private static void verificarValidacionesEntrada() {
+        comparar("Texto obligatorio se normaliza", "Inventario",
+                ValidacionesEntrada.textoObligatorio("  Inventario  ", "nombre"));
+        esperarExcepcion("Texto obligatorio rechaza espacios", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.textoObligatorio("   ", "nombre"));
+        comparar("Entero se convierte dentro del rango", 12, ValidacionesEntrada.entero("12", "cantidad", 0, 20));
+        esperarExcepcion("Entero rechaza texto", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.entero("doce", "cantidad", 0, 20));
+        esperarExcepcion("Entero rechaza valor fuera del rango", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.entero("21", "cantidad", 0, 20));
+        comparar("Decimal valido se conserva", new BigDecimal("12.50"),
+                ValidacionesEntrada.decimal("12.50", "precio", BigDecimal.ZERO, new BigDecimal("20")));
+        comparar("Fecha valida se convierte", LocalDate.of(2024, 2, 29),
+                ValidacionesEntrada.fecha("2024-02-29", "fecha"));
+        esperarExcepcion("Fecha imposible se rechaza", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.fecha("2025-02-29", "fecha"));
+        esperarExcepcion("Rango de fechas invertido se rechaza", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.rangoFechas(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 1, 1)));
+        comparar("Telefono con formato internacional valido", "+51 999-111-222",
+                ValidacionesEntrada.telefono("+51 999-111-222"));
+        esperarExcepcion("Telefono demasiado corto se rechaza", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.telefono("12345"));
+        comparar("Correo valido se normaliza", "soporte@computo.pe",
+                ValidacionesEntrada.correoElectronico(" soporte@computo.pe "));
+        esperarExcepcion("Correo invalido se rechaza", IllegalArgumentException.class,
+                () -> ValidacionesEntrada.correoElectronico("correo-invalido"));
     }
 
     private static void verificarUbicacion() {

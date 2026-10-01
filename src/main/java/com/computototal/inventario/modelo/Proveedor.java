@@ -1,11 +1,10 @@
 package com.computototal.inventario.modelo;
 
 import java.util.UUID;
-import java.util.regex.Pattern;
+
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 public class Proveedor {
-    private static final Pattern FORMATO_CORREO = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
-
     private final UUID id;
     private String nombre;
     private String telefono;
@@ -14,8 +13,8 @@ public class Proveedor {
     public Proveedor(UUID id, String nombre, String telefono, String correoElectronico) {
         this.id = ValidacionDominio.identificador(id, "id");
         this.nombre = ValidacionDominio.textoObligatorio(nombre, "nombre");
-        this.telefono = ValidacionDominio.textoObligatorio(telefono, "telefono");
-        this.correoElectronico = validarCorreo(correoElectronico);
+        this.telefono = ValidacionesEntrada.telefono(telefono);
+        this.correoElectronico = ValidacionesEntrada.correoElectronico(correoElectronico);
     }
 
     public UUID getId() {
@@ -35,7 +34,7 @@ public class Proveedor {
     }
 
     public void setTelefono(String telefono) {
-        this.telefono = ValidacionDominio.textoObligatorio(telefono, "telefono");
+        this.telefono = ValidacionesEntrada.telefono(telefono);
     }
 
     public String getCorreoElectronico() {
@@ -43,14 +42,6 @@ public class Proveedor {
     }
 
     public void setCorreoElectronico(String correoElectronico) {
-        this.correoElectronico = validarCorreo(correoElectronico);
-    }
-
-    private String validarCorreo(String correo) {
-        String correoNormalizado = ValidacionDominio.textoObligatorio(correo, "correoElectronico");
-        if (!FORMATO_CORREO.matcher(correoNormalizado).matches()) {
-            throw new IllegalArgumentException("correoElectronico no tiene un formato valido");
-        }
-        return correoNormalizado;
+        this.correoElectronico = ValidacionesEntrada.correoElectronico(correoElectronico);
     }
 }

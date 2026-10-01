@@ -12,12 +12,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,6 +24,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.Icon;
 import javax.swing.JLabel;
@@ -39,6 +38,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.MaskFormatter;
 
 import com.computototal.inventario.modelo.EstadoEquipo;
 import com.computototal.inventario.modelo.Movimiento;
@@ -56,6 +56,7 @@ import com.computototal.inventario.servicio.ResultadoAltaEquipo;
 import com.computototal.inventario.servicio.ResultadoMovimiento;
 import com.computototal.inventario.servicio.SesionUsuario;
 import com.computototal.inventario.servicio.StockServicio;
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 public final class DashboardInventarioGUI {
     private static final Color VERDE = new Color(27, 103, 81);
@@ -450,7 +451,7 @@ public final class DashboardInventarioGUI {
         fila = agregarCampo(formulario, fila, "Sede", sede);
         fila = agregarCampo(formulario, fila, "Stock minimo", minimo);
         agregarAccion(formulario, fila, "Guardar minimo", () -> {
-            stock.configurarMinimo(idSeleccionado(categoria), textoSeleccionado(sede), (Integer) minimo.getValue());
+            stock.configurarMinimo(idSeleccionado(categoria), textoSeleccionado(sede), valorEntero(minimo));
             mostrarMensaje("Stock minimo actualizado.");
         });
     }
@@ -459,12 +460,19 @@ public final class DashboardInventarioGUI {
         formularioConsulta(formulario, true);
     }
 
+    private int valorEntero(JSpinner spinner) {
+        try {
+            spinner.commitEdit();
+        } catch (java.text.ParseException errorNumero) {
+            throw new IllegalArgumentException("El stock minimo debe ser un numero entero", errorNumero);
+        }
+        return ValidacionesEntrada.entero(spinner.getValue().toString(), "stockMinimo", 0, Integer.MAX_VALUE);
+    }
+
     private void formularioReporte(JPanel formulario) {
         JComboBox<String> alcance = new JComboBox<>(new String[]{"Global", "Por sede"});
-        JTextField inicio = campoTexto();
-        inicio.setText(LocalDate.now().withDayOfMonth(1).toString());
-        JTextField fin = campoTexto();
-        fin.setText(LocalDate.now().toString());
+        JFormattedTextField inicio = campoFecha(LocalDate.now().withDayOfMonth(1));
+        JFormattedTextField fin = campoFecha(LocalDate.now());
         JComboBox<Elemento> sede = comboSedes();
         int fila = agregarCampo(formulario, 0, "Alcance", alcance);
         fila = agregarCampo(formulario, fila, "Fecha inicial (AAAA-MM-DD)", inicio);
@@ -475,6 +483,7 @@ public final class DashboardInventarioGUI {
         agregarAccion(formulario, fila, "Generar reporte", () -> {
             LocalDate fechaInicio = leerFecha(inicio);
             LocalDate fechaFin = leerFecha(fin);
+            ValidacionesEntrada.rangoFechas(fechaInicio, fechaFin);
             ReporteMovimientos reporte = alcance.getSelectedIndex() == 0
                     ? reportes.generarGlobal(fechaInicio, fechaFin)
                     : reportes.generarPorSede(fechaInicio, fechaFin, textoSeleccionado(sede));
@@ -690,6 +699,20 @@ public final class DashboardInventarioGUI {
         return new JComboBox<>(opciones.toArray(Elemento[]::new));
     }
 
+    private JFormattedTextField campoFecha(LocalDate fechaInicial) {
+        try {
+            MaskFormatter mascara = new MaskFormatter("####-##-##");
+            mascara.setAllowsInvalid(false);
+            mascara.setOverwriteMode(true);
+            JFormattedTextField campo = new JFormattedTextField(mascara);
+            campo.setText(fechaInicial.toString());
+            campo.setToolTipText("Formato AAAA-MM-DD");
+            return campo;
+        } catch (java.text.ParseException errorMascara) {
+            throw new IllegalStateException("No se pudo configurar el campo de fecha", errorMascara);
+        }
+    }
+
     private JTextField campoTexto() {
         JTextField campo = new JTextField();
         campo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
@@ -716,19 +739,11 @@ public final class DashboardInventarioGUI {
     }
 
     private String texto(JTextField campo) {
-        String valor = campo.getText().strip();
-        if (valor.isEmpty()) {
-            throw new IllegalArgumentException("Completa todos los campos requeridos");
-        }
-        return valor;
+        return ValidacionesEntrada.textoObligatorio(campo.getText(), "campo");
     }
 
     private LocalDate leerFecha(JTextField campo) {
-        try {
-            return LocalDate.parse(texto(campo));
-        } catch (DateTimeParseException errorFecha) {
-            throw new IllegalArgumentException("Usa el formato AAAA-MM-DD para las fechas", errorFecha);
-        }
+        return ValidacionesEntrada.fecha(campo.getText(), "fecha");
     }
 
     private String ubicacionTexto(EquipoConsulta.UbicacionResumen ubicacion) {
