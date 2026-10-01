@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
-import com.computototal.inventario.consola.ConsolaInventario;
 import com.computototal.inventario.dao.CategoriaDAO;
 import com.computototal.inventario.dao.ConfiguracionStockMinimoDAO;
 import com.computototal.inventario.dao.EquipoDAO;
@@ -21,6 +20,8 @@ import com.computototal.inventario.dao.memoria.UbicacionDAOMemoria;
 import com.computototal.inventario.dao.memoria.UsuarioDAOMemoria;
 import com.computototal.inventario.datos.DatosIniciales;
 import com.computototal.inventario.demo.DemostracionRF;
+import com.computototal.inventario.gui.DashboardInventarioGUI;
+import com.computototal.inventario.gui.InicioSesionGUI;
 import com.computototal.inventario.servicio.AutenticacionServicio;
 import com.computototal.inventario.servicio.AutorizacionServicio;
 import com.computototal.inventario.servicio.EquipoServicio;
@@ -55,9 +56,12 @@ public final class Main {
                     componentes.reporteServicio()).ejecutar();
             return;
         }
-        new ConsolaInventario(componentes.autenticacionServicio(), componentes.autorizacionServicio(),
+        if (!InicioSesionGUI.mostrar(componentes.autenticacionServicio())) {
+            return;
+        }
+        new DashboardInventarioGUI(componentes.autenticacionServicio(), componentes.autorizacionServicio(),
                 componentes.equipoServicio(), componentes.movimientoServicio(), componentes.stockServicio(),
-                componentes.reporteServicio()).iniciar();
+                componentes.reporteServicio()).mostrar();
     }
 
     private static Componentes crearComponentes(Clock reloj) {

@@ -10,12 +10,14 @@ Aplicación para el inventario de equipos de COMPUTO TOTAL GMD S. A. Usa Java 17
 
 ## Iniciar
 
+La aplicación abre una ventana gráfica para iniciar sesión y luego muestra el panel de inventario. Las opciones disponibles dependen del rol. Al seleccionar un módulo, la ventana anterior se cierra y se abre la del módulo elegido; el panel principal permite volver a navegar.
+
 ```powershell
 mvn clean compile
 java -cp target/classes com.computototal.inventario.Main
 ```
 
-Inicia sesión con una de las cuentas de demostración:
+Usa una de estas cuentas de demostración en la ventana de acceso:
 
 | Rol | Usuario | Contraseña |
 |---|---|---|
@@ -23,7 +25,7 @@ Inicia sesión con una de las cuentas de demostración:
 | Almacenero | `almacen` | `almacen-demo-2026` |
 | Auditor | `auditor` | `auditor-demo-2026` |
 
-Escribe el numero de la opción y pulsa Enter. Puedes seleccionar categorias, proveedores y ubicaciones desde las listas que muestra la consola. Para reportes, ingresa fechas con formato `AAAA-MM-DD`. `0` cierra sesión y, desde el menú de acceso, `0` termina la aplicación. La aplicación maneja el fin de entrada cerrando la sesión.
+Los formularios permiten registrar y consultar equipos, gestionar movimientos, revisar stock y alertas, consultar historiales y generar reportes. Para reportes, ingresa fechas con formato `AAAA-MM-DD`. El boton para cerrar sesión finaliza la aplicación.
 
 El Administrador y el Almacenero pueden registrar y operar inventario y configurar minimos. El Auditor puede consultar existencias, alertas, historial e informes. Las operaciones vuelven a comprobar permisos en los servicios.
 
