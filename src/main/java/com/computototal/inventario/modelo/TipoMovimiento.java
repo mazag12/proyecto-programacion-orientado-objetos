@@ -5,5 +5,6 @@ public enum TipoMovimiento {
     SALIDA,
     TRASLADO,
     CAMBIO_UBICACION,
-    CAMBIO_ESTADO
+    CAMBIO_ESTADO,
+    ANULACION_ALTA
 }

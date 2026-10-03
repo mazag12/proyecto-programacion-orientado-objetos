@@ -135,10 +135,18 @@ public final class Movimiento {
             case CAMBIO_ESTADO -> exigir(destinoExterno.isEmpty()
                             && estadoAnterior.isPresent() && estadoNuevo.isPresent()
                         && estadoAnterior.get() != EstadoEquipo.DE_BAJA
+                        && estadoAnterior.get() != EstadoEquipo.ANULADO
                         && estadoAnterior.get() != estadoNuevo.get() && presenciaAnterior == presenciaNueva
+                        && estadoNuevo.get() != EstadoEquipo.ANULADO
                         && (presenciaAnterior || estadoNuevo.get() != EstadoEquipo.DISPONIBLE)
                         && ubicacionEstadoCoherente(),
                     "Un cambio de estado requiere estados distintos y no puede cambiar presencia");
+            case ANULACION_ALTA -> exigir(ubicacionOrigen.filter(InstantaneaUbicacion::almacen).isPresent()
+                            && ubicacionDestino.isEmpty() && destinoExterno.isEmpty()
+                            && estadoAnterior.orElse(null) == EstadoEquipo.DISPONIBLE
+                            && estadoNuevo.orElse(null) == EstadoEquipo.ANULADO
+                            && presenciaAnterior && !presenciaNueva,
+                    "La anulacion de alta requiere un ingreso inicial disponible en almacen");
         }
     }
 

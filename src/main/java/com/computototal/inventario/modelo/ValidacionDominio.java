@@ -12,6 +12,10 @@ final class ValidacionDominio {
         return ValidacionesEntrada.textoObligatorio(valor, nombreCampo);
     }
 
+    static String numeroSerie(String valor) {
+        return ValidacionesEntrada.numeroSerie(valor);
+    }
+
     static UUID identificador(UUID valor, String nombreCampo) {
         return ValidacionesEntrada.identificador(valor, nombreCampo);
     }

@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 public final class ValidacionesEntrada {
     private static final Pattern FORMATO_CORREO = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final Pattern FORMATO_TELEFONO = Pattern.compile("^\\+?[0-9() -]+$");
+    private static final Pattern FORMATO_NUMERO_SERIE = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9._/-]{1,38}[A-Za-z0-9]$");
 
     private ValidacionesEntrada() {
     }
@@ -41,6 +42,14 @@ public final class ValidacionesEntrada {
 
     public static String textoClave(String valor, String nombreCampo) {
         return textoObligatorio(valor, nombreCampo).toLowerCase(Locale.ROOT);
+    }
+
+    public static String numeroSerie(String valor) {
+        String normalizado = texto(valor, "numeroSerie", 3, 40);
+        if (!FORMATO_NUMERO_SERIE.matcher(normalizado).matches()) {
+            throw new IllegalArgumentException("numeroSerie solo admite letras, numeros, guion, punto, guion bajo o barra; debe iniciar y terminar con letra o numero");
+        }
+        return normalizado.toUpperCase(Locale.ROOT);
     }
 
     public static UUID identificador(UUID valor, String nombreCampo) {

@@ -4,5 +4,6 @@ public enum EstadoEquipo {
     DISPONIBLE,
     EN_USO,
     EN_MANTENIMIENTO,
-    DE_BAJA
+    DE_BAJA,
+    ANULADO
 }

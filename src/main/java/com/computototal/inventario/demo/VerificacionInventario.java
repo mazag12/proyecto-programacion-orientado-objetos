@@ -39,8 +39,10 @@ import com.computototal.inventario.servicio.EquipoServicio;
 import com.computototal.inventario.servicio.GestorContrasenas;
 import com.computototal.inventario.servicio.MovimientoServicio;
 import com.computototal.inventario.servicio.ResultadoAltaEquipo;
+import com.computototal.inventario.servicio.ResultadoMovimiento;
 import com.computototal.inventario.servicio.Sesion;
 import com.computototal.inventario.servicio.StockServicio;
+import com.computototal.inventario.validacion.ValidacionesEntrada;
 
 public final class VerificacionInventario {
     private static int comprobaciones;
@@ -113,6 +115,20 @@ public final class VerificacionInventario {
         comparar("Consulta expone ubicacion actual", "Almacen Lima A",
                 porCodigo.ubicacionActual().orElseThrow().ambiente());
         comparar("Lista de equipos devuelve resultado independiente", 2, contexto.equipoServicio().listar().size());
+        comparar("La serie se recorta y normaliza a mayusculas", "SN-007",
+                ValidacionesEntrada.numeroSerie(" sn-007 "));
+        esperar("Rechaza serie menor a tres caracteres", IllegalArgumentException.class,
+                () -> contexto.equipoServicio().registrarEquipo(id(110), "EQ-SER-110", "A1",
+                        "HP", "ProBook", id(1), id(11)));
+        esperar("Rechaza espacios dentro de la serie", IllegalArgumentException.class,
+                () -> contexto.equipoServicio().registrarEquipo(id(111), "EQ-SER-111", "SN 123",
+                        "HP", "ProBook", id(1), id(11)));
+        esperar("Rechaza simbolos no permitidos en la serie", IllegalArgumentException.class,
+                () -> contexto.equipoServicio().registrarEquipo(id(112), "EQ-SER-112", "SN#123",
+                        "HP", "ProBook", id(1), id(11)));
+        esperar("Rechaza serie mayor a cuarenta caracteres", IllegalArgumentException.class,
+                () -> contexto.equipoServicio().registrarEquipo(id(113), "EQ-SER-113", "A".repeat(41),
+                        "HP", "ProBook", id(1), id(11)));
 
         contexto.reloj().fijar(fecha(1, 10, 0));
         contexto.movimientoServicio().cambiarUbicacion(id(101), id(22), "Reorganizacion interna");
@@ -285,6 +301,8 @@ public final class VerificacionInventario {
                 contexto.equipoServicio().consultarPorId(id(102)).estado());
         esperar("Almacenero no puede eliminar", SecurityException.class,
                 () -> contexto.equipoServicio().eliminar(id(105)));
+        esperar("Almacenero no puede anular altas", SecurityException.class,
+                () -> contexto.equipoServicio().anularAlta(id(105), "Error de registro"));
         contexto.autenticacion().cerrarSesion();
 
         contexto.autenticacion().iniciarSesion("auditor", contrasenaAuditor());
@@ -298,6 +316,8 @@ public final class VerificacionInventario {
                         "Intento de auditor"));
         esperar("Auditor no puede eliminar", SecurityException.class,
                 () -> contexto.equipoServicio().eliminar(id(105)));
+        esperar("Auditor no puede anular altas", SecurityException.class,
+                () -> contexto.equipoServicio().anularAlta(id(105), "Error de registro"));
         comparar("Auditor no modifica equipo ni historial", true,
                 contexto.equipoServicio().consultarPorId(id(102)).estado() == EstadoEquipo.EN_MANTENIMIENTO
                         && contexto.movimientoDAO().listar().size() == movimientosAntesAuditor);
@@ -320,6 +340,38 @@ public final class VerificacionInventario {
         contexto.movimientoServicio().registrarSalida(id(102), "Sede externa", "Retiro para eliminacion");
         esperar("No elimina equipo fuera del almacen con historial", IllegalStateException.class,
                 () -> contexto.equipoServicio().eliminar(id(102)));
+
+        esperar("No anula equipo con movimientos posteriores", IllegalStateException.class,
+                () -> contexto.equipoServicio().anularAlta(id(101), "Alta equivocada"));
+        contexto.equipoServicio().registrarEquipo(id(109), "EQ-109", "SER-109", "HP", "ProBook", id(1), id(11));
+        esperar("No anula equipo sin ingreso inicial", IllegalStateException.class,
+                () -> contexto.equipoServicio().anularAlta(id(109), "Alta equivocada"));
+
+        contexto.reloj().fijar(fecha(1, 10, 11));
+        int stockAntesAnulacion = contexto.stockServicio()
+                .consultarDisponibilidad(id(1), "Lima actualizada").totalPresente();
+        contexto.equipoServicio().registrarEquipoConIngreso(id(108), "EQ-108", "SER-108", "HP", "ProBook",
+                id(1), id(11), id(21), "Ingreso inicial");
+        comparar("Ingreso inicial aumenta el stock antes de anular", stockAntesAnulacion + 1,
+                contexto.stockServicio().consultarDisponibilidad(id(1), "Lima actualizada").totalPresente());
+        ResultadoMovimiento anulacion = contexto.equipoServicio().anularAlta(id(108), "Equipo duplicado");
+        comparar("Anulacion registra un movimiento especifico", TipoMovimiento.ANULACION_ALTA,
+                anulacion.movimiento().getTipo());
+        comparar("Anulacion conserva el motivo", "Equipo duplicado", anulacion.movimiento().getMotivo());
+        comparar("Anulacion deja equipo terminal y fuera de almacen", true,
+                contexto.equipoServicio().consultarPorId(id(108)).estado() == EstadoEquipo.ANULADO
+                        && !contexto.equipoServicio().consultarPorId(id(108)).presenteEnAlmacen());
+        comparar("Anulacion restaura el conteo de stock", stockAntesAnulacion,
+                contexto.stockServicio().consultarDisponibilidad(id(1), "Lima actualizada").totalPresente());
+        comparar("Anulacion conserva ingreso y evento de auditoria", List.of(TipoMovimiento.INGRESO,
+                        TipoMovimiento.ANULACION_ALTA), contexto.movimientoServicio().historialPorEquipo(id(108))
+                        .stream().map(Movimiento::getTipo).toList());
+        comparar("Equipo anulado se filtra del listado operativo", false,
+                contieneEquipo(contexto.equipoServicio().listar(), id(108)));
+        esperar("No se puede reingresar un equipo anulado", IllegalStateException.class,
+                () -> contexto.movimientoServicio().registrarIngreso(id(108), id(21), "Intento de reingreso"));
+        comparar("Reingreso bloqueado no agrega historial", 2,
+                contexto.movimientoServicio().historialPorEquipo(id(108)).size());
     }
 
     private static void verificarCompensacion(Contexto contexto) {
@@ -349,6 +401,17 @@ public final class VerificacionInventario {
                 contieneEquipo(contexto.equipoServicio().listar(), id(107)));
         comparar("Fallo de ingreso inicial conserva historial", totalMovimientosAntes,
                 contexto.movimientoDAO().listar().size());
+
+        contexto.reloj().fijar(fecha(1, 10, 11));
+        contexto.movimientoServicio().registrarIngreso(id(106), id(21), "Ingreso para probar anulacion");
+        EquipoConsulta antesDeAnular = contexto.equipoServicio().consultarPorId(id(106));
+        int movimientosAntesDeAnular = contexto.movimientoDAO().listar().size();
+        esperar("Fallo de anulacion informa error", IllegalStateException.class,
+                () -> servicioFallido.anularAlta(id(106), "Anulacion que falla"));
+        comparar("Fallo al guardar anulacion restaura equipo", antesDeAnular,
+                contexto.equipoServicio().consultarPorId(id(106)));
+        comparar("Fallo al guardar anulacion conserva ingreso y evita evento parcial",
+                movimientosAntesDeAnular, contexto.movimientoDAO().listar().size());
     }
 
     private static Contexto crearContexto() {

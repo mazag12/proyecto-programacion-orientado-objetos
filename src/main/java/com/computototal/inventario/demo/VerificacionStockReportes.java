@@ -19,6 +19,7 @@ import com.computototal.inventario.modelo.ConfiguracionStockMinimo;
 import com.computototal.inventario.modelo.EstadoEquipo;
 import com.computototal.inventario.modelo.Proveedor;
 import com.computototal.inventario.modelo.Rol;
+import com.computototal.inventario.modelo.TipoMovimiento;
 import com.computototal.inventario.modelo.Ubicacion;
 import com.computototal.inventario.modelo.Usuario;
 import com.computototal.inventario.servicio.AutenticacionServicio;
@@ -238,6 +239,21 @@ public final class VerificacionStockReportes {
                 junioDespuesDeCambios.saldoFinal() == 2
                         && junioDespuesDeCambios.existenciasActuales().stream()
                         .mapToInt(EstadoStock::disponible).sum() == 3);
+
+        ResultadoMovimiento anulacion = contexto.equipoServicio().anularAlta(id(203), "Registro duplicado");
+        comparar("Anulacion posterior al ingreso conserva su tipo", TipoMovimiento.ANULACION_ALTA,
+                anulacion.movimiento().getTipo());
+        ReporteMovimientos agosto = contexto.reporteServicio().generarGlobal(
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 2));
+        SaldoCategoria saldoAgosto = obtenerSaldo(agosto, id(1));
+        comparar("Reporte cuenta anulaciones de alta", 1, agosto.anulacionesAlta());
+        comparar("Reporte no mezcla anulaciones con salidas", 0, agosto.salidas());
+        comparar("Reporte agrega anulaciones por categoria", 1, saldoAgosto.anulacionesAlta());
+        comparar("Anulacion compensa el ingreso en el saldo historico", true,
+                agosto.saldoInicial() + agosto.entradas() - agosto.salidas() - agosto.anulacionesAlta()
+                        + agosto.trasladosRecibidos() - agosto.trasladosEnviados() == agosto.saldoFinal());
+        comparar("Equipo anulado no permanece en existencias actuales", 2,
+                agosto.existenciasActuales().stream().mapToInt(EstadoStock::disponible).sum());
 
         Categoria categoria = contexto.categoriaDAO().buscarPorId(id(1)).orElseThrow();
         categoria.setNombre("Portatiles actualizados");

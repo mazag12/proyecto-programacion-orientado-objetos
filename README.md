@@ -25,7 +25,7 @@ Usa una de estas cuentas de demostración en la ventana de acceso:
 | Almacenero | `almacen` | `almacen-demo-2026` |
 | Auditor | `auditor` | `auditor-demo-2026` |
 
-Los formularios permiten registrar y consultar equipos, gestionar movimientos, revisar stock y alertas, consultar historiales y generar reportes. Para reportes, ingresa fechas con formato `AAAA-MM-DD`. El boton para cerrar sesión finaliza la aplicación.
+Los formularios permiten registrar y consultar equipos, gestionar movimientos, revisar stock y alertas, consultar historiales y generar reportes. El menú ofrece anular altas con un único ingreso inicial; la anulación conserva el historial y solicita un motivo. Los equipos anulados no aparecen en las listas operativas, pero su historial sigue disponible. El número de serie debe tener entre 3 y 40 caracteres, usar letras, números, guion, punto, guion bajo o barra, y empezar y terminar con letra o número; se normaliza a mayúsculas. Para reportes, ingresa fechas con formato `AAAA-MM-DD`. El boton para cerrar sesión finaliza la aplicación.
 
 El Administrador y el Almacenero pueden registrar y operar inventario y configurar minimos. El Auditor puede consultar existencias, alertas, historial e informes. Las operaciones vuelven a comprobar permisos en los servicios.
 

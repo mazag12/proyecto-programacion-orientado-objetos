@@ -162,6 +162,31 @@ public final class MovimientoServicio {
         return new ResultadoMovimiento(movimiento, List.of());
     }
 
+    public ResultadoMovimiento anularAlta(UUID equipoId, String motivo) {
+        SesionUsuario responsable = autorizar(Permiso.ANULAR_ALTAS);
+        String motivoValidado = validarTexto(motivo, "motivo");
+        Equipo original = buscarEquipo(equipoId);
+        List<Movimiento> historial = movimientoDAO.listarPorEquipo(equipoId);
+        if (historial.size() != 1 || historial.get(0).getTipo() != TipoMovimiento.INGRESO) {
+            throw new IllegalStateException("Solo se puede anular un alta con un unico ingreso inicial");
+        }
+        Ubicacion origen = buscarUbicacion(original.getUbicacionActualId()
+                .orElseThrow(() -> new IllegalStateException("El equipo no tiene ubicacion actual")));
+        if (!origen.isAlmacen()) {
+            throw new IllegalStateException("Solo se puede anular un alta mientras el equipo siga en almacen");
+        }
+
+        Equipo actualizado = original.copiar();
+        actualizado.anularAlta();
+        LocalDateTime fechaHora = validarFechaSiguiente(original.getId());
+        Movimiento movimiento = crearMovimiento(fechaHora, TipoMovimiento.ANULACION_ALTA, motivoValidado,
+                actualizado, responsable, Optional.of(origen), Optional.empty(), Optional.empty(),
+                Optional.of(original.getEstado()), Optional.of(actualizado.getEstado()),
+                original.isPresenteEnAlmacen(), actualizado.isPresenteEnAlmacen());
+        persistirMovimiento(original, actualizado, movimiento);
+        return resultado(movimiento, original.getCategoriaId(), origen.getSede());
+    }
+
     public List<Movimiento> historialPorEquipo(UUID equipoId) {
         autorizar(Permiso.CONSULTAR_HISTORIAL);
         Equipo equipo = buscarEquipo(equipoId);

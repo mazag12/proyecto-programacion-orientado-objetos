@@ -327,7 +327,7 @@ public final class DashboardInventarioGUI {
                     mostrarStock(stock.consultarAlertasActuales()));
             case HISTORIAL -> formularioHistorial(formulario);
             case REPORTE -> formularioReporte(formulario);
-            case ELIMINAR_EQUIPO -> formularioEliminar(formulario);
+            case ANULAR_ALTA_EQUIPO -> formularioAnularAlta(formulario);
             case INICIO -> throw new IllegalArgumentException("El panel principal no es un modulo de operacion");
         }
     }
@@ -335,6 +335,7 @@ public final class DashboardInventarioGUI {
     private void formularioAltaEquipo(JPanel formulario) {
         JTextField codigo = campoTexto();
         JTextField serie = campoTexto();
+        serie.setToolTipText("3-40 caracteres; letras, numeros, -, ., _ o /. Debe empezar y terminar con letra o numero; se guarda en mayusculas.");
         JTextField marca = campoTexto();
         JTextField modelo = campoTexto();
         JComboBox<Elemento> categoria = comboReferencias(equipos.listarCategorias());
@@ -378,67 +379,68 @@ public final class DashboardInventarioGUI {
     }
 
     private void formularioIngreso(JPanel formulario) {
-        JTextField codigo = campoTexto();
+        JComboBox<Elemento> equipo = comboEquipos();
         JComboBox<Elemento> ubicacion = comboUbicaciones(true);
         JTextField motivo = campoTexto();
-        int fila = agregarCampo(formulario, 0, "Codigo del equipo", codigo);
+        int fila = agregarCampo(formulario, 0, "Equipo", equipo);
         fila = agregarCampo(formulario, fila, "Almacen de destino", ubicacion);
         fila = agregarCampo(formulario, fila, "Motivo", motivo);
         agregarAccion(formulario, fila, "Registrar ingreso", () -> {
-            EquipoConsulta equipo = equipos.consultarPorCodigo(texto(codigo));
-            mostrarResultadoMovimiento(movimientos.registrarIngreso(equipo.id(), idSeleccionado(ubicacion), texto(motivo)));
+            mostrarResultadoMovimiento(movimientos.registrarIngreso(idSeleccionado(equipo),
+                    idSeleccionado(ubicacion), texto(motivo)));
         });
     }
 
     private void formularioSalida(JPanel formulario) {
-        JTextField codigo = campoTexto();
+        JComboBox<Elemento> equipo = comboEquipos();
         JTextField destino = campoTexto();
         JTextField motivo = campoTexto();
-        int fila = agregarCampo(formulario, 0, "Codigo del equipo", codigo);
+        int fila = agregarCampo(formulario, 0, "Equipo", equipo);
         fila = agregarCampo(formulario, fila, "Destino externo", destino);
         fila = agregarCampo(formulario, fila, "Motivo", motivo);
         agregarAccion(formulario, fila, "Registrar salida", () -> {
-            EquipoConsulta equipo = equipos.consultarPorCodigo(texto(codigo));
-            mostrarResultadoMovimiento(movimientos.registrarSalida(equipo.id(), texto(destino), texto(motivo)));
+            mostrarResultadoMovimiento(movimientos.registrarSalida(idSeleccionado(equipo),
+                    texto(destino), texto(motivo)));
         });
     }
 
     private void formularioTraslado(JPanel formulario) {
-        JTextField codigo = campoTexto();
+        JComboBox<Elemento> equipo = comboEquipos();
         JComboBox<Elemento> ubicacion = comboUbicaciones(true);
         JTextField motivo = campoTexto();
-        int fila = agregarCampo(formulario, 0, "Codigo del equipo", codigo);
+        int fila = agregarCampo(formulario, 0, "Equipo", equipo);
         fila = agregarCampo(formulario, fila, "Almacen de destino", ubicacion);
         fila = agregarCampo(formulario, fila, "Motivo", motivo);
         agregarAccion(formulario, fila, "Registrar traslado", () -> {
-            EquipoConsulta equipo = equipos.consultarPorCodigo(texto(codigo));
-            mostrarResultadoMovimiento(movimientos.trasladar(equipo.id(), idSeleccionado(ubicacion), texto(motivo)));
+            mostrarResultadoMovimiento(movimientos.trasladar(idSeleccionado(equipo),
+                    idSeleccionado(ubicacion), texto(motivo)));
         });
     }
 
     private void formularioCambioUbicacion(JPanel formulario) {
-        JTextField codigo = campoTexto();
+        JComboBox<Elemento> equipo = comboEquipos();
         JComboBox<Elemento> ubicacion = comboUbicaciones(null);
         JTextField motivo = campoTexto();
-        int fila = agregarCampo(formulario, 0, "Codigo del equipo", codigo);
+        int fila = agregarCampo(formulario, 0, "Equipo", equipo);
         fila = agregarCampo(formulario, fila, "Nueva ubicacion", ubicacion);
         fila = agregarCampo(formulario, fila, "Motivo", motivo);
         agregarAccion(formulario, fila, "Cambiar ubicacion", () -> {
-            EquipoConsulta equipo = equipos.consultarPorCodigo(texto(codigo));
-            mostrarResultadoMovimiento(movimientos.cambiarUbicacion(equipo.id(), idSeleccionado(ubicacion), texto(motivo)));
+            mostrarResultadoMovimiento(movimientos.cambiarUbicacion(idSeleccionado(equipo),
+                    idSeleccionado(ubicacion), texto(motivo)));
         });
     }
 
     private void formularioCambioEstado(JPanel formulario) {
-        JTextField codigo = campoTexto();
-        JComboBox<EstadoEquipo> estado = new JComboBox<>(EstadoEquipo.values());
+        JComboBox<Elemento> equipo = comboEquipos();
+        JComboBox<EstadoEquipo> estado = new JComboBox<>(new EstadoEquipo[]{EstadoEquipo.DISPONIBLE,
+            EstadoEquipo.EN_USO, EstadoEquipo.EN_MANTENIMIENTO, EstadoEquipo.DE_BAJA});
         JTextField motivo = campoTexto();
-        int fila = agregarCampo(formulario, 0, "Codigo del equipo", codigo);
+        int fila = agregarCampo(formulario, 0, "Equipo", equipo);
         fila = agregarCampo(formulario, fila, "Nuevo estado", estado);
         fila = agregarCampo(formulario, fila, "Justificacion", motivo);
         agregarAccion(formulario, fila, "Actualizar estado", () -> {
-            EquipoConsulta equipo = equipos.consultarPorCodigo(texto(codigo));
-            mostrarResultadoMovimiento(movimientos.cambiarEstado(equipo.id(), (EstadoEquipo) estado.getSelectedItem(),
+                mostrarResultadoMovimiento(movimientos.cambiarEstado(idSeleccionado(equipo),
+                    (EstadoEquipo) estado.getSelectedItem(),
                     texto(motivo)));
         });
     }
@@ -491,17 +493,23 @@ public final class DashboardInventarioGUI {
         });
     }
 
-    private void formularioEliminar(JPanel formulario) {
-        JTextField codigo = campoTexto();
-        int fila = agregarCampo(formulario, 0, "Codigo del equipo", codigo);
-        agregarAccion(formulario, fila, "Eliminar equipo", () -> {
-            EquipoConsulta equipo = equipos.consultarPorCodigo(texto(codigo));
+    private void formularioAnularAlta(JPanel formulario) {
+        JComboBox<Elemento> equipoSeleccionado = comboEquipos();
+        JTextField motivo = campoTexto();
+        int fila = agregarCampo(formulario, 0, "Equipo", equipoSeleccionado);
+        fila = agregarCampo(formulario, fila, "Motivo de anulacion", motivo);
+        agregarAccion(formulario, fila, "Anular alta", () -> {
+            String motivoAnulacion = texto(motivo);
+                Elemento equipo = (Elemento) equipoSeleccionado.getSelectedItem();
+                if (equipo == null) {
+                throw new IllegalStateException("No hay equipos activos para anular");
+                }
             int confirmacion = JOptionPane.showConfirmDialog(ventana,
-                    "Se eliminara el equipo " + equipo.codigo() + ". ¿Deseas continuar?",
-                    "Confirmar eliminacion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    "Se anulara el alta de " + equipo.nombre() + ". Motivo: " + motivoAnulacion
+                            + ". ¿Deseas continuar?",
+                    "Confirmar anulacion de alta", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (confirmacion == JOptionPane.YES_OPTION) {
-                equipos.eliminar(equipo.id());
-                mostrarMensaje("Equipo eliminado.");
+                mostrarResultadoMovimiento(equipos.anularAlta(equipo.id(), motivoAnulacion));
             }
         });
     }
@@ -622,6 +630,7 @@ public final class DashboardInventarioGUI {
         String alcance = reporte.sede().map(sede -> "Sede " + sede).orElse("Global");
         JLabel resumen = new JLabel("" + alcance + "  |  " + reporte.inicio() + " a " + reporte.fin()
                 + "  |  Entradas " + reporte.entradas() + "  |  Salidas " + reporte.salidas()
+            + "  |  Anulaciones " + reporte.anulacionesAlta()
                 + "  |  Traslados recibidos " + reporte.trasladosRecibidos()
                 + "  |  enviados " + reporte.trasladosEnviados()
                 + "  |  Saldo " + reporte.saldoInicial() + " -> " + reporte.saldoFinal());
@@ -686,6 +695,18 @@ public final class DashboardInventarioGUI {
                 .map(ubicacion -> new Elemento(ubicacion.id(), ubicacionTexto(ubicacion)))
                 .toList();
         return comboElementos(opciones);
+    }
+
+    private JComboBox<Elemento> comboEquipos() {
+        List<Elemento> opciones = equipos.listar().stream()
+                .sorted(java.util.Comparator.comparing(EquipoConsulta::codigo, String.CASE_INSENSITIVE_ORDER))
+                .map(equipo -> new Elemento(equipo.id(), equipo.codigo() + " | " + equipo.numeroSerie()
+                        + " | " + equipo.marca() + " " + equipo.modelo() + " | " + equipo.estado()))
+                .toList();
+        JComboBox<Elemento> combo = comboElementos(opciones);
+        combo.setMaximumRowCount(12);
+        combo.setToolTipText("Escribe el codigo para localizar el equipo en la lista");
+        return combo;
     }
 
     private JComboBox<Elemento> comboSedes() {
@@ -896,7 +917,7 @@ public final class DashboardInventarioGUI {
         ALERTAS("Alertas de stock", "Stock", Permiso.CONSULTAR_ALERTAS, "alerta"),
         HISTORIAL("Historial de movimientos", "Consultas", Permiso.CONSULTAR_HISTORIAL, "historial"),
         REPORTE("Reportes por fechas", "Consultas", Permiso.CONSULTAR_REPORTES, "reporte"),
-        ELIMINAR_EQUIPO("Eliminar equipo", "Administracion", Permiso.ELIMINAR_REGISTROS, "eliminar");
+        ANULAR_ALTA_EQUIPO("Anular alta reciente", "Administracion", Permiso.ANULAR_ALTAS, "eliminar");
 
         private final String nombre;
         private final String seccion;

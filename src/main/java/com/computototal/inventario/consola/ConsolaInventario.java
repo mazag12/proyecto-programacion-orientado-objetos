@@ -142,7 +142,7 @@ public final class ConsolaInventario {
         agregar(opciones, Permiso.CONSULTAR_ALERTAS, "Consultar alertas actuales", this::listarAlertas);
         agregar(opciones, Permiso.CONSULTAR_HISTORIAL, "Consultar historial", this::consultarHistorial);
         agregar(opciones, Permiso.CONSULTAR_REPORTES, "Generar reporte por fechas", this::generarReporte);
-        agregar(opciones, Permiso.ELIMINAR_REGISTROS, "Eliminar equipo permitido", this::eliminarEquipo);
+        agregar(opciones, Permiso.ANULAR_ALTAS, "Anular alta reciente", this::anularAlta);
         return opciones;
     }
 
@@ -154,7 +154,7 @@ public final class ConsolaInventario {
 
     private void registrarEquipo() throws IOException {
         String codigo = leer("Codigo: ");
-        String serie = leer("Numero de serie: ");
+        String serie = leer("Numero de serie (3-40; letras, numeros, - . _ /): ");
         String marca = leer("Marca: ");
         String modelo = leer("Modelo: ");
         UUID categoriaId = elegirReferencia("Categoria", equipos.listarCategorias());
@@ -187,36 +187,37 @@ public final class ConsolaInventario {
     }
 
     private void registrarIngreso() throws IOException {
-        EquipoConsulta equipo = buscarEquipoPorCodigoPrompt();
+        EquipoConsulta equipo = seleccionarEquipoActivo();
         UUID ubicacionId = elegirUbicacion(true);
         String motivo = leer("Motivo: ");
         mostrarResultadoMovimiento(movimientos.registrarIngreso(equipo.id(), ubicacionId, motivo));
     }
 
     private void registrarSalida() throws IOException {
-        EquipoConsulta equipo = buscarEquipoPorCodigoPrompt();
+        EquipoConsulta equipo = seleccionarEquipoActivo();
         String destino = leer("Destino: ");
         String motivo = leer("Motivo: ");
         mostrarResultadoMovimiento(movimientos.registrarSalida(equipo.id(), destino, motivo));
     }
 
     private void trasladar() throws IOException {
-        EquipoConsulta equipo = buscarEquipoPorCodigoPrompt();
+        EquipoConsulta equipo = seleccionarEquipoActivo();
         UUID ubicacionId = elegirUbicacion(true);
         String motivo = leer("Motivo: ");
         mostrarResultadoMovimiento(movimientos.trasladar(equipo.id(), ubicacionId, motivo));
     }
 
     private void cambiarUbicacion() throws IOException {
-        EquipoConsulta equipo = buscarEquipoPorCodigoPrompt();
+        EquipoConsulta equipo = seleccionarEquipoActivo();
         UUID ubicacionId = elegirUbicacion(null);
         String motivo = leer("Motivo: ");
         mostrarResultadoMovimiento(movimientos.cambiarUbicacion(equipo.id(), ubicacionId, motivo));
     }
 
     private void cambiarEstado() throws IOException {
-        EquipoConsulta equipo = buscarEquipoPorCodigoPrompt();
-        EstadoEquipo[] estados = EstadoEquipo.values();
+        EquipoConsulta equipo = seleccionarEquipoActivo();
+        EstadoEquipo[] estados = {EstadoEquipo.DISPONIBLE, EstadoEquipo.EN_USO,
+            EstadoEquipo.EN_MANTENIMIENTO, EstadoEquipo.DE_BAJA};
         for (int indice = 0; indice < estados.length; indice++) {
             System.out.println((indice + 1) + ") " + estados[indice]);
         }
@@ -274,14 +275,26 @@ public final class ConsolaInventario {
         mostrarReporte(reporte);
     }
 
-    private void eliminarEquipo() throws IOException {
-        EquipoConsulta equipo = buscarEquipoPorCodigoPrompt();
-        equipos.eliminar(equipo.id());
-        System.out.println("Equipo eliminado.");
+    private void anularAlta() throws IOException {
+        EquipoConsulta equipo = seleccionarEquipoActivo();
+        String motivo = leer("Motivo de anulacion: ");
+        mostrarResultadoMovimiento(equipos.anularAlta(equipo.id(), motivo));
     }
 
-    private EquipoConsulta buscarEquipoPorCodigoPrompt() throws IOException {
-        return equipos.consultarPorCodigo(leer("Codigo del equipo: "));
+    private EquipoConsulta seleccionarEquipoActivo() throws IOException {
+        List<EquipoConsulta> opciones = equipos.listar().stream()
+                .sorted(java.util.Comparator.comparing(EquipoConsulta::codigo, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+        if (opciones.isEmpty()) {
+            throw new IllegalStateException("No hay equipos activos para seleccionar");
+        }
+        System.out.println("Seleccione un equipo:");
+        for (int indice = 0; indice < opciones.size(); indice++) {
+            EquipoConsulta equipo = opciones.get(indice);
+            System.out.println((indice + 1) + ") " + equipo.codigo() + " | " + equipo.numeroSerie()
+                    + " | " + equipo.marca() + " " + equipo.modelo() + " | " + equipo.estado());
+        }
+        return opciones.get(leerIndice("Equipo: ", opciones.size()));
     }
 
     private UUID elegirReferencia(String titulo, List<ReferenciaCatalogo> opciones) throws IOException {
@@ -413,6 +426,7 @@ public final class ConsolaInventario {
         System.out.println("Movimientos del periodo: " + reporte.movimientos().size());
         reporte.movimientos().forEach(this::mostrarMovimiento);
         System.out.println("Entradas " + reporte.entradas() + " | salidas " + reporte.salidas()
+            + " | anulaciones de alta " + reporte.anulacionesAlta()
                 + " | traslados recibidos " + reporte.trasladosRecibidos()
                 + " | enviados " + reporte.trasladosEnviados());
         System.out.println("Saldo historico inicial " + reporte.saldoInicial()

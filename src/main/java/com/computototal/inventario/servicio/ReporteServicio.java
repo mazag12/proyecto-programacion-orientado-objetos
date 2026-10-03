@@ -61,12 +61,14 @@ public final class ReporteServicio {
             ContadoresCategoria conteos = contadores.getOrDefault(categoriaId, new ContadoresCategoria());
             saldosPorCategoria.add(new SaldoCategoria(categoriaId, nombresCategoria.getOrDefault(categoriaId, "Categoria"),
                     saldoInicialPorCategoria.getOrDefault(categoriaId, 0), conteos.entradas, conteos.salidas,
+                    conteos.anulacionesAlta,
                     conteos.trasladosRecibidos, conteos.trasladosEnviados,
                     saldoFinalPorCategoria.getOrDefault(categoriaId, 0)));
         }
 
         int entradas = saldosPorCategoria.stream().mapToInt(SaldoCategoria::entradas).sum();
         int salidas = saldosPorCategoria.stream().mapToInt(SaldoCategoria::salidas).sum();
+        int anulacionesAlta = saldosPorCategoria.stream().mapToInt(SaldoCategoria::anulacionesAlta).sum();
         int recibidos = saldosPorCategoria.stream().mapToInt(SaldoCategoria::trasladosRecibidos).sum();
         int enviados = saldosPorCategoria.stream().mapToInt(SaldoCategoria::trasladosEnviados).sum();
         int inicial = saldoInicialPorCategoria.values().stream().mapToInt(Integer::intValue).sum();
@@ -75,8 +77,8 @@ public final class ReporteServicio {
         List<EstadoStock> actuales = stockServicio.listarExistencias().stream()
                 .filter(estado -> sede.isEmpty() || mismaSede(estado.sede(), sede.get()))
                 .toList();
-        return new ReporteMovimientos(inicio, fin, sede, periodo, entradas, salidas, recibidos, enviados,
-                inicial, finalPeriodo, saldosPorCategoria, actuales);
+        return new ReporteMovimientos(inicio, fin, sede, periodo, entradas, salidas, anulacionesAlta,
+            recibidos, enviados, inicial, finalPeriodo, saldosPorCategoria, actuales);
     }
 
     private Map<UUID, Integer> reconstruir(List<Movimiento> movimientos, LocalDate corte,
@@ -117,6 +119,8 @@ public final class ReporteServicio {
             }
             case CAMBIO_ESTADO -> {
             }
+                case ANULACION_ALTA -> agregarSiCorresponde(saldos, categoriaId,
+                    movimiento.getUbicacionOrigen().orElseThrow().sede(), -1, sede);
         }
     }
 
@@ -152,6 +156,7 @@ public final class ReporteServicio {
                 }
                 case CAMBIO_ESTADO -> {
                 }
+                case ANULACION_ALTA -> contador.anulacionesAlta++;
             }
         }
         return conteos;
@@ -193,6 +198,7 @@ public final class ReporteServicio {
     private static final class ContadoresCategoria {
         private int entradas;
         private int salidas;
+        private int anulacionesAlta;
         private int trasladosRecibidos;
         private int trasladosEnviados;
     }

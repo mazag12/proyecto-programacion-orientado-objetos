@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public record ReporteMovimientos(LocalDate inicio, LocalDate fin, Optional<String> sede,
                                  List<Movimiento> movimientos,
-                                 int entradas, int salidas,
+                                 int entradas, int salidas, int anulacionesAlta,
                                  int trasladosRecibidos, int trasladosEnviados,
                                  int saldoInicial, int saldoFinal,
                                  List<SaldoCategoria> saldosPorCategoria,

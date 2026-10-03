@@ -75,7 +75,10 @@ public final class EquipoServicio {
 
     public List<EquipoConsulta> listar() {
         autorizar(Permiso.CONSULTAR_INVENTARIO);
-        return equipoDAO.listar().stream().map(this::crearConsulta).toList();
+        return equipoDAO.listar().stream()
+            .filter(equipo -> equipo.getEstado() != EstadoEquipo.ANULADO)
+            .map(this::crearConsulta)
+            .toList();
     }
 
     public List<ReferenciaCatalogo> listarCategorias() {
@@ -110,6 +113,10 @@ public final class EquipoServicio {
             throw new IllegalStateException("No se puede eliminar un equipo con historial");
         }
         equipoDAO.eliminar(equipo.getId());
+    }
+
+    public ResultadoMovimiento anularAlta(UUID equipoId, String motivo) {
+        return movimientoServicio.anularAlta(equipoId, motivo);
     }
 
     private ResultadoAltaEquipo registrarEquipoInterno(UUID id, String codigo, String numeroSerie,

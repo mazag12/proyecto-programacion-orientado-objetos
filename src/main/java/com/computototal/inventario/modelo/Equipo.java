@@ -21,7 +21,7 @@ public class Equipo {
                   UUID categoriaId, UUID proveedorId, EstadoEquipo estadoInicial) {
         this.id = ValidacionDominio.identificador(id, "id");
         this.codigo = ValidacionDominio.textoObligatorio(codigo, "codigo");
-        this.numeroSerie = ValidacionDominio.textoObligatorio(numeroSerie, "numeroSerie");
+        this.numeroSerie = ValidacionDominio.numeroSerie(numeroSerie);
         this.marca = ValidacionDominio.textoObligatorio(marca, "marca");
         this.modelo = ValidacionDominio.textoObligatorio(modelo, "modelo");
         this.categoriaId = ValidacionDominio.identificador(categoriaId, "categoriaId");
@@ -156,6 +156,9 @@ public class Equipo {
     public void cambiarEstado(EstadoEquipo nuevoEstado) {
         EstadoEquipo estadoValidado = ValidacionDominio.requerido(nuevoEstado, "nuevoEstado");
         verificarNoDadoDeBaja();
+        if (estadoValidado == EstadoEquipo.ANULADO) {
+            throw new IllegalArgumentException("El estado ANULADO solo se asigna al anular el alta");
+        }
         if (estado == estadoValidado) {
             throw new IllegalArgumentException("El equipo ya tiene ese estado");
         }
@@ -163,6 +166,16 @@ public class Equipo {
             throw new IllegalStateException("Un equipo fuera del almacen debe reingresar para estar disponible");
         }
         estado = estadoValidado;
+    }
+
+    public void anularAlta() {
+        if (estado != EstadoEquipo.DISPONIBLE || !presenteEnAlmacen || ubicacionActualId.isEmpty()) {
+            throw new IllegalStateException("Solo se puede anular un alta inicial presente y disponible en almacen");
+        }
+        estado = EstadoEquipo.ANULADO;
+        presenteEnAlmacen = false;
+        ubicacionActualId = Optional.empty();
+        destinoSalida = Optional.empty();
     }
 
     public Equipo copiar() {
@@ -175,8 +188,8 @@ public class Equipo {
     }
 
     private void verificarNoDadoDeBaja() {
-        if (estado == EstadoEquipo.DE_BAJA) {
-            throw new IllegalStateException("Un equipo dado de baja no puede reactivarse ni moverse");
+        if (estado == EstadoEquipo.DE_BAJA || estado == EstadoEquipo.ANULADO) {
+            throw new IllegalStateException("Un equipo dado de baja o anulado no puede reactivarse ni moverse");
         }
     }
 }
