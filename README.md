@@ -31,15 +31,13 @@ El Administrador y el Almacenero pueden registrar y operar inventario y configur
 
 ## Manual de usuario
 
-En los pasos siguientes, reemplaza cada marcador **Captura pendiente** por la imagen correspondiente. Las opciones visibles pueden variar segun el rol con el que iniciaste sesion.
-
 ### 1. Iniciar sesion
 
 1. Inicia la aplicacion con los comandos de la seccion [Iniciar](#iniciar).
 2. Escribe el usuario y la contrasena de una de las cuentas disponibles.
 3. Selecciona **Iniciar sesion**. El panel principal mostrara los modulos permitidos para ese rol.
 
-**Captura pendiente:** ventana de inicio de sesion.
+![alt text](img/inicio.gif)
 
 ### 2. Registrar un equipo
 
