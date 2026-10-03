@@ -49,7 +49,7 @@ El Administrador y el Almacenero pueden registrar y operar inventario y configur
 
 La serie debe tener entre 3 y 40 caracteres. Se permiten letras, numeros, guion (`-`), punto (`.`), guion bajo (`_`) y barra (`/`); debe iniciar y terminar con letra o numero. El sistema la normaliza a mayusculas.
 
-**Captura pendiente:** formulario de registro y confirmacion del equipo.
+![alt text](img/registro.gif)
 
 ### 3. Consultar o listar equipos
 
@@ -57,7 +57,7 @@ La serie debe tener entre 3 y 40 caracteres. Se permiten letras, numeros, guion 
 2. Para una consulta, escribe el criterio elegido y ejecuta la busqueda.
 3. Los equipos anulados no aparecen en las listas operativas. Puedes buscarlos por codigo o serie para revisar su historial.
 
-**Captura pendiente:** consulta y listado de equipos.
+![alt text](img/listar.gif)
 
 ### 4. Registrar movimientos
 
@@ -69,7 +69,9 @@ En los formularios de movimientos, selecciona el equipo de la lista; se muestran
 - **Cambiar ubicacion:** selecciona equipo y nueva ubicacion dentro de su sede; agrega el motivo.
 - **Cambiar estado tecnico:** selecciona equipo, estado y justificacion.
 
-**Captura pendiente:** lista de seleccion de equipo y formularios de movimientos.
+![alt text](img/registro_movimientos.gif)
+
+![alt text](img/registo_movimientos_2.gif)
 
 ### 5. Revisar existencias y alertas
 
@@ -77,7 +79,7 @@ En los formularios de movimientos, selecciona el equipo de la lista; se muestran
 2. Para establecer un minimo, abre **Configurar stock minimo**, selecciona categoria y sede, ingresa un valor igual o mayor que cero y guarda.
 3. Abre **Alertas de stock** para revisar las sedes cuya disponibilidad esta por debajo del minimo.
 
-**Captura pendiente:** existencias actuales, configuracion de minimo y alertas.
+![alt text](img/stock.gif)
 
 ### 6. Consultar historial y reportes
 
@@ -85,7 +87,7 @@ En los formularios de movimientos, selecciona el equipo de la lista; se muestran
 2. Para generar un reporte, abre **Reportes por fechas**, selecciona alcance global o por sede e ingresa las fechas inicial y final con formato `AAAA-MM-DD`.
 3. El reporte separa ingresos, salidas, anulaciones y traslados.
 
-**Captura pendiente:** historial y reporte por fechas.
+![alt text](img/resporte.gif)
 
 ### 7. Anular un alta reciente
 
@@ -95,14 +97,14 @@ Esta opcion esta disponible para el Administrador. Solo se puede anular un equip
 2. Selecciona el equipo de la lista e ingresa el motivo de anulacion.
 3. Confirma la operacion. El sistema marca el equipo como anulado, lo excluye del inventario activo y conserva el historial.
 
-**Captura pendiente:** formulario y confirmacion de anulacion.
+![alt text](img/anular.gif)
 
 ### 8. Cerrar sesion
 
 1. Selecciona la opcion para cerrar sesion.
 2. Confirma el cierre. Para continuar, inicia sesion nuevamente.
 
-**Captura pendiente:** confirmacion de cierre de sesion.
+![alt text](img/cerrar.gif)
 
 ## Demostración automática
 
