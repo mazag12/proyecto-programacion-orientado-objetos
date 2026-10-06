@@ -1,5 +1,5 @@
--- MySQL 8 design reference only. This file is not executed by the application.
--- Runtime persistence remains in memory; no JDBC connection is provided.
+-- MySQL 8 design reference only. Runtime tables are created by HsqlDatabase
+-- using HSQLDB-compatible DDL; this file is not executed by the application.
 
 CREATE TABLE categoria (
     id CHAR(36) NOT NULL,

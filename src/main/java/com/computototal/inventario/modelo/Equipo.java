@@ -33,6 +33,22 @@ public class Equipo {
         this.destinoSalida = Optional.empty();
     }
 
+        public static Equipo restaurar(UUID id, String codigo, String numeroSerie, String marca, String modelo,
+                        UUID categoriaId, UUID proveedorId, EstadoEquipo estado,
+                        boolean presenteEnAlmacen, Optional<UUID> ubicacionActualId,
+                        Optional<UUID> ultimaUbicacionAlmacenId, Optional<String> destinoSalida) {
+        Equipo equipo = new Equipo(id, codigo, numeroSerie, marca, modelo, categoriaId, proveedorId, estado);
+        equipo.presenteEnAlmacen = presenteEnAlmacen;
+        equipo.ubicacionActualId = ValidacionDominio.requerido(ubicacionActualId, "ubicacionActualId")
+            .map(valor -> ValidacionDominio.identificador(valor, "ubicacionActualId"));
+        equipo.ultimaUbicacionAlmacenId = ValidacionDominio.requerido(ultimaUbicacionAlmacenId,
+            "ultimaUbicacionAlmacenId").map(valor -> ValidacionDominio.identificador(valor,
+                "ultimaUbicacionAlmacenId"));
+        equipo.destinoSalida = ValidacionDominio.requerido(destinoSalida, "destinoSalida")
+            .map(valor -> ValidacionDominio.textoObligatorio(valor, "destinoSalida"));
+        return equipo;
+        }
+
     public UUID getId() {
         return id;
     }

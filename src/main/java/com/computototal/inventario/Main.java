@@ -11,13 +11,14 @@ import com.computototal.inventario.dao.MovimientoDAO;
 import com.computototal.inventario.dao.ProveedorDAO;
 import com.computototal.inventario.dao.UbicacionDAO;
 import com.computototal.inventario.dao.UsuarioDAO;
-import com.computototal.inventario.dao.memoria.CategoriaDAOMemoria;
-import com.computototal.inventario.dao.memoria.ConfiguracionStockMinimoDAOMemoria;
-import com.computototal.inventario.dao.memoria.EquipoDAOMemoria;
-import com.computototal.inventario.dao.memoria.MovimientoDAOMemoria;
-import com.computototal.inventario.dao.memoria.ProveedorDAOMemoria;
-import com.computototal.inventario.dao.memoria.UbicacionDAOMemoria;
-import com.computototal.inventario.dao.memoria.UsuarioDAOMemoria;
+import com.computototal.inventario.dao.jdbc.CategoriaDAOJdbc;
+import com.computototal.inventario.dao.jdbc.ConfiguracionStockMinimoDAOJdbc;
+import com.computototal.inventario.dao.jdbc.EquipoDAOJdbc;
+import com.computototal.inventario.dao.jdbc.HsqlDatabase;
+import com.computototal.inventario.dao.jdbc.MovimientoDAOJdbc;
+import com.computototal.inventario.dao.jdbc.ProveedorDAOJdbc;
+import com.computototal.inventario.dao.jdbc.UbicacionDAOJdbc;
+import com.computototal.inventario.dao.jdbc.UsuarioDAOJdbc;
 import com.computototal.inventario.datos.DatosIniciales;
 import com.computototal.inventario.demo.DemostracionRF;
 import com.computototal.inventario.gui.DashboardInventarioGUI;
@@ -35,17 +36,37 @@ public final class Main {
     private Main() {
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args)  throws Exception {
         boolean demo = args.length == 1 && "--demo".equals(args[0]);
         if (args.length > 0 && !demo) {
             System.err.println("Uso: java -cp target/classes com.computototal.inventario.Main [--demo]");
             System.exit(2);
         }
 
+        String url = demo
+                ? "jdbc:hsqldb:mem:inventario_demo"
+                : "jdbc:hsqldb:file:./data/mi_base";
+                HsqlDatabase base = HsqlDatabase.abrir(url, "SA", "");
+                try {
+            System.out.println("Conexión JDBC con HSQLDB establecida.");
+                        if (demo) {
+                                try (base) {
+                                        ejecutarAplicacion(true, base);
+                                }
+                        } else {
+                                ejecutarAplicacion(false, base);
+                        }
+        } catch (java.sql.SQLException e) {
+            System.err.println("No se pudo conectar con HSQLDB: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    private static void ejecutarAplicacion(boolean demo, HsqlDatabase base) {
         Clock reloj = demo
                 ? Clock.fixed(Instant.parse("2026-09-15T10:00:00Z"), ZoneId.of("UTC"))
                 : Clock.systemDefaultZone();
-        Componentes componentes = crearComponentes(reloj);
+        Componentes componentes = crearComponentes(reloj, base);
         new DatosIniciales(componentes.categoriaDAO(), componentes.proveedorDAO(), componentes.ubicacionDAO(),
                 componentes.usuarioDAO(), componentes.gestorContrasenas(), componentes.autenticacionServicio(),
                 componentes.equipoServicio(), componentes.movimientoServicio(), componentes.stockServicio()).cargar();
@@ -64,14 +85,14 @@ public final class Main {
                 componentes.reporteServicio()).mostrar();
     }
 
-    private static Componentes crearComponentes(Clock reloj) {
-        EquipoDAO equipoDAO = new EquipoDAOMemoria();
-        MovimientoDAO movimientoDAO = new MovimientoDAOMemoria();
-        CategoriaDAO categoriaDAO = new CategoriaDAOMemoria();
-        ConfiguracionStockMinimoDAO configuracionDAO = new ConfiguracionStockMinimoDAOMemoria();
-        ProveedorDAO proveedorDAO = new ProveedorDAOMemoria();
-        UbicacionDAO ubicacionDAO = new UbicacionDAOMemoria();
-        UsuarioDAO usuarioDAO = new UsuarioDAOMemoria();
+    private static Componentes crearComponentes(Clock reloj, HsqlDatabase base) {
+        EquipoDAO equipoDAO = new EquipoDAOJdbc(base);
+        MovimientoDAO movimientoDAO = new MovimientoDAOJdbc(base);
+        CategoriaDAO categoriaDAO = new CategoriaDAOJdbc(base);
+        ConfiguracionStockMinimoDAO configuracionDAO = new ConfiguracionStockMinimoDAOJdbc(base);
+        ProveedorDAO proveedorDAO = new ProveedorDAOJdbc(base);
+        UbicacionDAO ubicacionDAO = new UbicacionDAOJdbc(base);
+        UsuarioDAO usuarioDAO = new UsuarioDAOJdbc(base);
 
         Sesion sesion = new Sesion();
         GestorContrasenas gestorContrasenas = new GestorContrasenas();

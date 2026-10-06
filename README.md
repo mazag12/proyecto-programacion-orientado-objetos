@@ -1,6 +1,6 @@
 # Inventario de equipos informáticos
 
-Aplicación para el inventario de equipos de COMPUTO TOTAL GMD S. A. Usa Java 17, servicios de negocio y almacenamiento en memoria. Los datos se reinician al cerrar la aplicación.
+Aplicación para el inventario de equipos de COMPUTO TOTAL GMD S. A. Usa Java 17, servicios de negocio y persistencia JDBC con HSQLDB. Los datos se almacenan en `data/mi_base`.
 
 ## Requisitos
 
@@ -14,7 +14,7 @@ La aplicación abre una ventana gráfica para iniciar sesión y luego muestra el
 
 ```powershell
 mvn clean compile
-java -cp target/classes com.computototal.inventario.Main
+java -cp "target/classes;lib/hsqldb.jar" com.computototal.inventario.Main
 ```
 
 Usa una de estas cuentas de demostración en la ventana de acceso:
@@ -111,7 +111,7 @@ Esta opcion esta disponible para el Administrador. Solo se puede anular un equip
 Ejecuta los mismos servicios con reloj y datos reproducibles, sin entrada interactiva:
 
 ```powershell
-java -cp target/classes com.computototal.inventario.Main --demo
+java -cp "target/classes;lib/hsqldb.jar" com.computototal.inventario.Main --demo
 ```
 
 Las verificaciones aisladas se pueden repetir con:
@@ -121,10 +121,11 @@ java -cp target/classes com.computototal.inventario.demo.VerificacionDao
 java -cp target/classes com.computototal.inventario.demo.VerificacionSeguridad
 java -cp target/classes com.computototal.inventario.demo.VerificacionInventario
 java -cp target/classes com.computototal.inventario.demo.VerificacionStockReportes
+java -cp "target/classes;lib/hsqldb.jar" com.computototal.inventario.demo.VerificacionPersistenciaJdbc
 ```
 
 ## Datos y persistencia
 
-Los usuarios y catalogos de demostración se cargan al iniciar; los hashes y sales se generan aleatoriamente en el momento. No se guardan datos entre ejecuciones. [sql/schema.sql](sql/schema.sql) es una referencia de diseño MySQL y no se ejecuta ni se usa para conectarse a una base de datos.
+La aplicación crea las tablas en HSQLDB al iniciar y guarda equipos, movimientos, usuarios, categorías, proveedores, ubicaciones y mínimos de stock en `data/mi_base`. La conexión de anclaje se cierra al salir y HSQLDB sincroniza la base en archivo. Los datos iniciales solo se cargan cuando la base está vacía; el modo `--demo` usa una base temporal en memoria. [sql/schema.sql](sql/schema.sql) se conserva como referencia de diseño MySQL y no se ejecuta en tiempo de ejecución.
 
-No incluye GUI, JDBC, JUnit ni dependencias de ejecución externas.
+El proyecto usa HSQLDB 2.7.4, incluido en `lib/hsqldb.jar` y declarado también como dependencia Maven.

@@ -57,6 +57,11 @@ public final class DatosIniciales {
         if (cargado) {
             return;
         }
+        if (!categoriaDAO.listar().isEmpty()
+                || usuarioDAO.buscarPorNombreUsuario(USUARIO_ADMIN).isPresent()) {
+            cargado = true;
+            return;
+        }
         cargarCatalogos();
         cargarUsuarios();
         autenticacionServicio.iniciarSesion(USUARIO_ADMIN, CLAVE_ADMIN.toCharArray());
